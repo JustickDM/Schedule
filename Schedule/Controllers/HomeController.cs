@@ -1,7 +1,8 @@
-﻿using System;
+﻿using Schedule.Models;
+using Schedule.Models.Entities;
+
 using System.Collections.Generic;
 using System.Linq;
-using System.Web;
 using System.Web.Mvc;
 
 namespace Schedule.Controllers
@@ -25,6 +26,18 @@ namespace Schedule.Controllers
 			ViewBag.Message = "Your contact page.";
 
 			return View();
+		}
+
+		public JsonResult GetEvents()
+		{
+			List<EventVM> events;
+
+			using(var db = new DatabaseContext())
+			{
+				events = db.Events.ToList().Select(dbObject => (EventVM)dbObject).ToList();
+			}
+
+			return Json(events, JsonRequestBehavior.AllowGet);
 		}
 	}
 }
