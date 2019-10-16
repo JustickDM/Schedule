@@ -39,5 +39,17 @@ namespace Schedule.Controllers
 
 			return Json(events, JsonRequestBehavior.AllowGet);
 		}
+
+		public JsonResult GetUsers()
+		{
+			List<UserVM> users;
+
+			using(var db = new DatabaseContext())
+			{
+				users = db.Users.ToList().Select(dbObject => (UserVM)dbObject).ToList();
+			}
+
+			return Json(users, JsonRequestBehavior.AllowGet);
+		}
 	}
 }

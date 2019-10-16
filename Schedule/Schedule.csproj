@@ -196,10 +196,14 @@
     </Compile>
     <Compile Include="Models\Entities\DatabaseContext.cs" />
     <Compile Include="Models\Entities\Event.cs" />
+    <Compile Include="Models\Entities\User.cs" />
+    <Compile Include="Models\UserVM.cs" />
     <Compile Include="Models\EventVM.cs" />
     <Compile Include="Models\JsonObject\RootObject.cs" />
     <Compile Include="Models\JsonObject\VkApiSettings.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="VkApi\Enums\BotCommandType.cs" />
+    <Compile Include="VkApi\Bot\ScheduleBot.cs" />
     <Compile Include="VkApi\Enums\EventType.cs" />
     <Compile Include="VkApi\Enums\ObjectParamsType.cs" />
     <Compile Include="VkApi\Enums\MethodType.cs" />

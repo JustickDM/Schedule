@@ -1,16 +1,15 @@
-﻿using HtmlAgilityPack;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 
 using Schedule.Models.Entities;
 using Schedule.Models.JsonObject;
 using Schedule.VkApi;
+using Schedule.VkApi.Bot;
 using Schedule.VkApi.Enums;
 using Schedule.VkApi.Extensions;
 
 using System;
 using System.IO;
 using System.Net.Http;
-using System.Text;
 using System.Threading.Tasks;
 using System.Web.Hosting;
 using System.Web.Http;
@@ -52,34 +51,19 @@ namespace VkApiGroupStatisticServerMVC.Controllers
                         });
                         db.SaveChanges();
 
+						var rnd = new Random();
+						var randomId = rnd.NextInt64();
+						var userId = rootObject.Object.Value<int>(ObjectParamsType.FromId.GetDescription());
+						var messageId = rootObject.Object.Value<int>(ObjectParamsType.Id.GetDescription());
 						var userText = rootObject.Object.ContainsKey(ObjectParamsType.Text.GetDescription()) ?
 							           rootObject.Object.Value<string>(ObjectParamsType.Text.GetDescription()) : 
 								       null;
 
 						if(!string.IsNullOrWhiteSpace(userText))
 						{
-							userText = userText.ToLowerInvariant().Trim();
-							userText = userText.Replace(" ", string.Empty);
-							var userInfo = userText.Split(',');
-							var message = string.Empty;
-
-							if(userInfo.Length == 3)
-							{
-								message = GetSchedule(userInfo[0], userInfo[1], userInfo[2]);
-
-								if(message == null)
-								{
-									message = "Введите корректно данные по факультету, курсу и группе. Например: fitu, 1, 42m";
-								}
-							}
-							else
-							{
-								message = "Извините, Максим меня еще не научил разговаривать:(";
-							}
-											
-							var rnd = new Random();
-							var randomId = rnd.NextInt64();
-							var userId = rootObject.Object.Value<int>(ObjectParamsType.FromId.GetDescription());
+							var scheduleBot = new ScheduleBot(userId, messageId);
+							var message = scheduleBot.Work(userText);
+							
 							var result = await _vkApiClient.MessageSendAsync(vkApiSettings.AccessToken, randomId, userId, message: message);
 						}
                     }
@@ -93,15 +77,5 @@ namespace VkApiGroupStatisticServerMVC.Controllers
                 Content = new StringContent(response, System.Text.Encoding.ASCII)
             };
         }
-
-		private string GetSchedule(string faculty, string course, string group)
-		{
-			var encoding = Encoding.GetEncoding("windows-1251");
-			var web = new HtmlWeb() { OverrideEncoding = encoding };
-			var html = web.Load($"http://schedule.npi-tu.ru/schedule/{faculty}/{course}/{group}");
-			var table = html.GetElementbyId("table_week_active");
-
-			return table?.InnerText;
-		}
 	}
 }
