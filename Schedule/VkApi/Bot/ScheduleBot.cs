@@ -1,4 +1,5 @@
 ﻿using HtmlAgilityPack;
+
 using Schedule.Models.Entities;
 using Schedule.VkApi.Enums;
 using Schedule.VkApi.Extensions;
@@ -91,17 +92,18 @@ namespace Schedule.VkApi.Bot
 								break;
 						}
 					}
+					else
+					{
+						result = command.Contains("регистрация")
+							? Registration(command)
+							: $"Я бы хотел с тобой поговорить на свободные темы, но умею только показывать расписание:(";
+					}
 				}
 				else
 				{
-					if(command.Contains("регистрация"))
-					{
-						result = Registration(command);
-					}
-					else
-					{
-						result = $"Давай ближе к делу, я не люблю общаться:)";
-					}
+					result = command.Contains("регистрация")
+						? Registration(command)
+						: $"Давай ближе к делу, я не люблю общаться:)";
 				}
 			}
 
@@ -137,16 +139,23 @@ namespace Schedule.VkApi.Bot
 
 				if(nodeCollection != null && nodeCollection.Count > 0)
 				{
-					var user = new User()
-					{
-						UserId = _userId,
-						Faculty = faculty,
-						Course = int.Parse(course),
-						Group = group,
-					};
-
 					using(var db = new DatabaseContext())
 					{
+						var user = db.Users.FirstOrDefault(u => u.UserId == _userId);
+
+						if(user != null)
+						{
+							db.Users.Remove(user);
+						}
+
+						user = new User()
+						{
+							UserId = _userId,
+							Faculty = faculty,
+							Course = int.Parse(course),
+							Group = group,
+						};
+
 						db.Users.Add(user);
 						db.SaveChanges();
 					}
@@ -176,17 +185,23 @@ namespace Schedule.VkApi.Bot
 
 			if(columnOfDay < (int)BotCommandType.Sunday)
 			{
-				var title = commandType.GetDescription();
+				var shortCaption = dataTable.Columns[columnOfDay].Caption;
+				var count = 0;
 
-				sb.AppendLine($"{title}");
+				sb.AppendLine($"--------{shortCaption}--------");
 
 				for(var j = 0; j < dataTable.Rows.Count; j++)
 				{
-					var time = dataTable.Rows[j][0].ToString().Insert(5, "-");
+					var time = dataTable.Rows[j][0].ToString().Insert(5, " - ");
 					var lesson = dataTable.Rows[j][columnOfDay].ToString();
 
+					if(string.IsNullOrWhiteSpace(lesson) || string.IsNullOrWhiteSpace(time)) continue;
+
 					sb.AppendLine($"{time} {lesson}");
+					count++;
 				}
+
+				if(count == 0) sb.AppendLine($"Урааа, выходной!:)");
 			}
 			else
 			{
@@ -202,20 +217,28 @@ namespace Schedule.VkApi.Bot
 			var title = commandType.GetDescription();
 
 			sb.AppendLine($"{title}");
+			sb.AppendLine(string.Empty);
 
 			for(var i = 1; i < dataTable.Columns.Count; i++)
 			{
 				var shortCaption = dataTable.Columns[i].Caption;
+				var count = 0;
 
-				sb.AppendLine($"{shortCaption}");
+				sb.AppendLine($"--------{shortCaption}--------");
 
 				for(var j = 0; j < dataTable.Rows.Count; j++)
 				{
-					var time = dataTable.Rows[j][0].ToString().Insert(5, "-");
+					var time = dataTable.Rows[j][0].ToString().Insert(5, " - ");
 					var lesson = dataTable.Rows[j][i].ToString();
 
+					if(string.IsNullOrWhiteSpace(lesson) || string.IsNullOrWhiteSpace(time)) continue;
+
 					sb.AppendLine($"{time} {lesson}");
+					count++;
 				}
+
+				if(count == 0) sb.AppendLine($"Урааа, выходной!:)");
+				if(i < dataTable.Columns.Count - 1) sb.AppendLine(string.Empty);
 			}
 
 			return sb.ToString();
