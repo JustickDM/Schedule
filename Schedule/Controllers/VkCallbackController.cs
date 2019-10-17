@@ -54,14 +54,13 @@ namespace VkApiGroupStatisticServerMVC.Controllers
 						var rnd = new Random();
 						var randomId = rnd.NextInt64();
 						var userId = rootObject.Object.Value<int>(ObjectParamsType.FromId.GetDescription());
-						var messageId = rootObject.Object.Value<int>(ObjectParamsType.Id.GetDescription());
 						var userText = rootObject.Object.ContainsKey(ObjectParamsType.Text.GetDescription()) ?
 							           rootObject.Object.Value<string>(ObjectParamsType.Text.GetDescription()) : 
 								       null;
 
 						if(!string.IsNullOrWhiteSpace(userText))
 						{
-							var scheduleBot = new ScheduleBot(userId, messageId);
+							var scheduleBot = new ScheduleBot(userId);
 							var message = scheduleBot.Work(userText);
 							
 							var result = await _vkApiClient.MessageSendAsync(vkApiSettings.AccessToken, randomId, userId, message: message);

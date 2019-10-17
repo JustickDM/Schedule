@@ -4,6 +4,7 @@ using Schedule.Models.Entities;
 using Schedule.VkApi.Enums;
 using Schedule.VkApi.Extensions;
 
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
@@ -22,15 +23,28 @@ namespace Schedule.VkApi.Bot
 			{"пт", BotCommandType.Friday},
 			{"сб", BotCommandType.Saturday},
 			{"вс", BotCommandType.Sunday},
-			{"текущая" , BotCommandType.CurrentWeek}
+			{"текущая" , BotCommandType.CurrentWeek},
+			{"сегодня", BotCommandType.Today },
+			{"завтра", BotCommandType.Tomorrow },
 		};
-		private static int _userId;
-		private static int _messageId;
+		private static Dictionary<string, string> _dayOfWeek = new Dictionary<string, string>
+		{
+			{"monday", "пн"},
+			{"tuesday", "вт"},
+			{"wednesday", "ср"},
+			{"thursday", "чт"},
+			{"friday", "пт"},
+			{"saturday", "сб"},
+			{"sunday", "вс"}
+		};
 
-		public ScheduleBot(int userId, int messageId)
+		private static int _userId;
+		private static DateTime _dateTime;
+
+		public ScheduleBot(int userId)
 		{
 			_userId = userId;
-			_messageId = messageId;
+			_dateTime = DateTime.Now.AddHours(10); //+10 часов для получения Московского времени
 		}
 
 		public string Work(string command)
@@ -40,85 +54,73 @@ namespace Schedule.VkApi.Bot
 			var sb = new StringBuilder();
 			var result = string.Empty;
 
-			if(_messageId == 1)
+			User user;
+
+			using(var db = new DatabaseContext())
 			{
-				result = Start();
+				user = db.Users.FirstOrDefault(u => u.UserId == _userId);
 			}
-			else
+
+			if(user != null)
 			{
-				User user;
+				var isContainsKey = _commands.ContainsKey(command);
 
-				using(var db = new DatabaseContext())
+				if(isContainsKey)
 				{
-					user = db.Users.FirstOrDefault(u => u.UserId == _userId);
-				}
+					var commandType = _commands[command];
 
-				if(user != null)
-				{
-					var isContainsKey = _commands.ContainsKey(command);
+					var nodeCollection = GetNodes(user.Faculty, user.Course.ToString(), user.Group);
+					var currentDataTable = ParseTable(nodeCollection);
 
-					if(isContainsKey)
+					switch(commandType)
 					{
-						var commandType = _commands[command];
-
-						var nodeCollection = GetNodes(user.Faculty, user.Course.ToString(), user.Group);
-						var currentDataTable = ParseTable(nodeCollection);
-
-						switch(commandType)
-						{
-							case BotCommandType.Monday:
-								result = GetDayOfWeekSchedule(currentDataTable, commandType);
-								break;
-							case BotCommandType.Tuesday:
-								result = GetDayOfWeekSchedule(currentDataTable, commandType);
-								break;
-							case BotCommandType.Wednesday:
-								result = GetDayOfWeekSchedule(currentDataTable, commandType);
-								break;
-							case BotCommandType.Thursday:
-								result = GetDayOfWeekSchedule(currentDataTable, commandType);
-								break;
-							case BotCommandType.Friday:
-								result = GetDayOfWeekSchedule(currentDataTable, commandType);
-								break;
-							case BotCommandType.Saturday:
-								result = GetDayOfWeekSchedule(currentDataTable, commandType);
-								break;
-							case BotCommandType.Sunday:
-								result = GetDayOfWeekSchedule(currentDataTable, commandType);
-								break;
-							case BotCommandType.CurrentWeek:
-								result = GetCurrentWeekSchedule(currentDataTable, commandType);
-								break;
-						}
-					}
-					else
-					{
-						result = command.Contains("регистрация")
-							? Registration(command)
-							: $"Я бы хотел с тобой поговорить на свободные темы, но умею только показывать расписание:(";
+						case BotCommandType.Monday:
+							result = GetDayOfWeekSchedule(currentDataTable, commandType);
+							break;
+						case BotCommandType.Tuesday:
+							result = GetDayOfWeekSchedule(currentDataTable, commandType);
+							break;
+						case BotCommandType.Wednesday:
+							result = GetDayOfWeekSchedule(currentDataTable, commandType);
+							break;
+						case BotCommandType.Thursday:
+							result = GetDayOfWeekSchedule(currentDataTable, commandType);
+							break;
+						case BotCommandType.Friday:
+							result = GetDayOfWeekSchedule(currentDataTable, commandType);
+							break;
+						case BotCommandType.Saturday:
+							result = GetDayOfWeekSchedule(currentDataTable, commandType);
+							break;
+						case BotCommandType.Sunday:
+							result = GetDayOfWeekSchedule(currentDataTable, commandType);
+							break;
+						case BotCommandType.CurrentWeek:
+							result = GetCurrentWeekSchedule(currentDataTable, commandType);
+							break;
+						case BotCommandType.Today:
+							result = GetTodaySchedule(currentDataTable, commandType);
+							break;
+						case BotCommandType.Tomorrow:
+							result = GetTomorrowSchedule(currentDataTable, commandType);
+							break;
 					}
 				}
 				else
 				{
 					result = command.Contains("регистрация")
 						? Registration(command)
-						: $"Давай ближе к делу, я не люблю общаться:)";
+						: $"Я бы хотел с тобой поговорить на свободные темы, но умею только показывать расписание:(";
 				}
+			}
+			else
+			{
+				result = command.Contains("регистрация")
+					? Registration(command)
+					: $"Давай ближе к делу, я не люблю общаться:)";
 			}
 
 			sb.AppendLine(result);
-
-			return sb.ToString();
-		}
-
-		private string Start()
-		{
-			var sb = new StringBuilder();
-
-			sb.AppendLine($"Здравствуй, я бот для расписания нашего университета:)");
-			sb.AppendLine($"Для дальнейшего взаимодействия требуется зарегистрироваться - напиши слово \"Регистрация\" (Без ковычек), а затем укажи название факультета, номер курса и название группы");
-			sb.AppendLine($"Например: Регистрация fitu, 1, 42m");
 
 			return sb.ToString();
 		}
@@ -161,7 +163,7 @@ namespace Schedule.VkApi.Bot
 					}
 
 					sb.AppendLine($"Регистрация прошла успешно, держи список активных команд:)");
-					sb.AppendLine($"Команды: Пн, Вт, Ср, Чт, Пт, Сб, Вс, Текущая");
+					sb.AppendLine($"Команды: Пн, Вт, Ср, Чт, Пт, Сб, Вс, Текущая, Сегодня, Завтра");
 				}
 				else
 				{
@@ -244,6 +246,31 @@ namespace Schedule.VkApi.Bot
 			return sb.ToString();
 		}
 
+		private string GetTodaySchedule(DataTable dataTable, BotCommandType commandType)
+		{
+			var dayOfWeek = _dateTime.DayOfWeek.GetDescription().ToLowerInvariant();
+			var day = _dayOfWeek[dayOfWeek];
+			var command = _commands[day];
+
+			var result = GetDayOfWeekSchedule(dataTable, command);
+
+			return result;
+		}
+
+		private string GetTomorrowSchedule(DataTable dataTable, BotCommandType commandType)
+		{
+			var tomorrowDay = _dateTime.AddDays(1);
+			var dayOfWeek = tomorrowDay.DayOfWeek.GetDescription().ToLowerInvariant();
+			var day = _dayOfWeek[dayOfWeek];
+			var command = _commands[day];
+
+			var result = GetDayOfWeekSchedule(dataTable, command);
+
+			return result;
+		}
+
+		#region Получение таблицы с расписание, её парсин и нормализация
+
 		private HtmlNodeCollection GetNodes(string faculty, string course, string group)
 		{
 			var encoding = Encoding.GetEncoding("windows-1251");
@@ -297,5 +324,7 @@ namespace Schedule.VkApi.Bot
 
 			return dataTable;
 		}
+
+		#endregion
 	}
 }

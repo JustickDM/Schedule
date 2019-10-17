@@ -50,6 +50,18 @@ namespace Schedule.VkApi.Enums
 		/// Текущая неделя
 		/// </summary>
 		[Description("Текущая неделя")]
-		CurrentWeek = 8
+		CurrentWeek = 8,
+
+		/// <summary>
+		/// Сегодня
+		/// </summary>
+		[Description("Сегодня")]
+		Today = 9,
+
+		/// <summary>
+		/// Завтра
+		/// </summary>
+		[Description("Завтра")]
+		Tomorrow = 10,
 	}
 }
