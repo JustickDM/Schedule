@@ -63,5 +63,11 @@ namespace Schedule.VkApi.Enums
 		/// </summary>
 		[Description("Завтра")]
 		Tomorrow = 10,
+
+		/// <summary>
+		/// Сейчас
+		/// </summary>
+		[Description("Сейчас")]
+		Now,
 	}
 }

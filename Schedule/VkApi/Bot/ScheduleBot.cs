@@ -26,6 +26,7 @@ namespace Schedule.VkApi.Bot
 			{"текущая" , BotCommandType.CurrentWeek},
 			{"сегодня", BotCommandType.Today },
 			{"завтра", BotCommandType.Tomorrow },
+			{"сейчас", BotCommandType.Now },
 		};
 		private static Dictionary<string, string> _dayOfWeek = new Dictionary<string, string>
 		{
@@ -104,6 +105,9 @@ namespace Schedule.VkApi.Bot
 						case BotCommandType.Tomorrow:
 							result = GetTomorrowSchedule(currentDataTable, commandType);
 							break;
+						case BotCommandType.Now:
+							result = GetNowSchedule(currentDataTable, commandType);
+							break;
 					}
 				}
 				else
@@ -128,7 +132,7 @@ namespace Schedule.VkApi.Bot
 		private string Registration(string command)
 		{
 			var sb = new StringBuilder();
-			var commandDescription = "Регистрация".ToLowerInvariant();
+			var commandDescription = "регистрация";
 			var userInfo = command.Replace(commandDescription, string.Empty).Trim().Replace(" ", string.Empty).Split(',');
 
 			if(userInfo.Length == 3)
@@ -163,7 +167,7 @@ namespace Schedule.VkApi.Bot
 					}
 
 					sb.AppendLine($"Регистрация прошла успешно, держи список активных команд:)");
-					sb.AppendLine($"Команды: Пн, Вт, Ср, Чт, Пт, Сб, Вс, Текущая, Сегодня, Завтра");
+					sb.AppendLine($"Команды: Пн, Вт, Ср, Чт, Пт, Сб, Вс, Текущая, Сегодня, Завтра, Сейчас");
 				}
 				else
 				{
@@ -175,6 +179,7 @@ namespace Schedule.VkApi.Bot
 			else
 			{
 				sb.AppendLine($"Введи правильно все данные:)");
+				sb.AppendLine($"Например (писать вместе со словом регистрация): Регистрация fitu, 1, 42m");
 			}
 
 			return sb.ToString();
@@ -267,6 +272,55 @@ namespace Schedule.VkApi.Bot
 			var result = GetDayOfWeekSchedule(dataTable, command);
 
 			return result;
+		}
+
+		private string GetNowSchedule(DataTable dataTable, BotCommandType commandType)
+		{
+			var sb = new StringBuilder();
+			var dayOfWeek = _dateTime.DayOfWeek.GetDescription().ToLowerInvariant();
+			var day = _dayOfWeek[dayOfWeek];
+			var command = _commands[day];
+			var columnOfDay = (int)command;
+
+			var shortCaption = dataTable.Columns[columnOfDay].Caption;
+			var IsHaveLesson = false;
+
+			sb.AppendLine($"--------{shortCaption}--------");
+
+			for(var j = 0; j < dataTable.Rows.Count; j++)
+			{
+				var time = dataTable.Rows[j][0].ToString().Insert(5, "|");
+				var lesson = dataTable.Rows[j][columnOfDay].ToString();
+				var times = time.Split('|');
+				var timeStart = DateTime.Parse(times[0]);
+				var timeFinish = DateTime.Parse(times[1]);
+
+				if((timeStart <= _dateTime) && (_dateTime <= timeFinish))
+				{
+					if(!string.IsNullOrWhiteSpace(lesson))
+					{
+						time = time.Replace('|', ' ').Insert(5, " - ");
+						sb.AppendLine($"{time} {lesson}");
+						IsHaveLesson = true;
+						break;
+					}
+					else
+					{
+						IsHaveLesson = false;
+					}
+				}
+				else
+				{
+					IsHaveLesson = false;
+				}
+			}
+
+			if(!IsHaveLesson)
+			{
+				sb.AppendLine($"В данный момент пары нет:)");
+			}
+
+			return sb.ToString();
 		}
 
 		#region Получение таблицы с расписание, её парсин и нормализация
