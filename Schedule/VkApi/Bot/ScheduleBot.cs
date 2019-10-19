@@ -76,25 +76,25 @@ namespace Schedule.VkApi.Bot
 					switch(commandType)
 					{
 						case BotCommandType.Monday:
-							result = GetDayOfWeekSchedule(currentDataTable, commandType);
+							result = GetDayOfWeekSchedule(currentDataTable, commandType, commandType);
 							break;
 						case BotCommandType.Tuesday:
-							result = GetDayOfWeekSchedule(currentDataTable, commandType);
+							result = GetDayOfWeekSchedule(currentDataTable, commandType, commandType);
 							break;
 						case BotCommandType.Wednesday:
-							result = GetDayOfWeekSchedule(currentDataTable, commandType);
+							result = GetDayOfWeekSchedule(currentDataTable, commandType, commandType);
 							break;
 						case BotCommandType.Thursday:
-							result = GetDayOfWeekSchedule(currentDataTable, commandType);
+							result = GetDayOfWeekSchedule(currentDataTable, commandType, commandType);
 							break;
 						case BotCommandType.Friday:
-							result = GetDayOfWeekSchedule(currentDataTable, commandType);
+							result = GetDayOfWeekSchedule(currentDataTable, commandType, commandType);
 							break;
 						case BotCommandType.Saturday:
-							result = GetDayOfWeekSchedule(currentDataTable, commandType);
+							result = GetDayOfWeekSchedule(currentDataTable, commandType, commandType);
 							break;
 						case BotCommandType.Sunday:
-							result = GetDayOfWeekSchedule(currentDataTable, commandType);
+							result = GetDayOfWeekSchedule(currentDataTable, commandType, commandType);
 							break;
 						case BotCommandType.CurrentWeek:
 							result = GetCurrentWeekSchedule(currentDataTable, commandType);
@@ -185,24 +185,64 @@ namespace Schedule.VkApi.Bot
 			return sb.ToString();
 		}
 
-		private string GetDayOfWeekSchedule(DataTable dataTable, BotCommandType commandType)
+		private string GetDayOfWeekSchedule(DataTable dataTable, BotCommandType selectedCommandType, BotCommandType writedCommandType)
 		{
 			var sb = new StringBuilder();
-			var columnOfDay = (int)commandType;
+			var columnOfDay = (int)selectedCommandType;
+
+			var rowsCount = dataTable.Rows.Count;
+			var isNotDayOfWeekCommand = false;
+
+			if(selectedCommandType != writedCommandType)
+			{
+				switch(writedCommandType)
+				{
+					case BotCommandType.Today:
+						rowsCount /= 2;
+						isNotDayOfWeekCommand = true;
+						break;
+					case BotCommandType.Tomorrow:
+						rowsCount /= 2;
+						isNotDayOfWeekCommand = true;
+						break;
+					case BotCommandType.Now:
+						rowsCount /= 2;
+						isNotDayOfWeekCommand = true;
+						break;
+				}
+			}
 
 			if(columnOfDay < (int)BotCommandType.Sunday)
 			{
 				var shortCaption = dataTable.Columns[columnOfDay].Caption;
 				var count = 0;
 
-				sb.AppendLine($"--------{shortCaption}--------");
+				if(!isNotDayOfWeekCommand) sb.AppendLine($"--------{shortCaption}, Текущая--------");
+				else sb.AppendLine($"--------{shortCaption}--------");
 
-				for(var j = 0; j < dataTable.Rows.Count; j++)
+				for(var j = 0; j < rowsCount; j++)
 				{
-					var time = dataTable.Rows[j][0].ToString().Insert(5, " - ");
+					var time = dataTable.Rows[j][0].ToString();
+					if(string.IsNullOrWhiteSpace(time))
+					{
+						if(count == 0) sb.AppendLine($"Урааа, выходной!:)");
+						count = 0;
+						sb.AppendLine(string.Empty);
+						if(!isNotDayOfWeekCommand) sb.AppendLine($"--------{shortCaption}, Следующая--------");
+						else sb.AppendLine($"--------{shortCaption}--------");
+						continue;
+					}
+					else
+					{
+						time = time.Insert(5, " - ");
+					}
+
 					var lesson = dataTable.Rows[j][columnOfDay].ToString();
 
-					if(string.IsNullOrWhiteSpace(lesson) || string.IsNullOrWhiteSpace(time)) continue;
+					if(string.IsNullOrWhiteSpace(lesson) || string.IsNullOrWhiteSpace(time))
+					{
+						continue;
+					}
 
 					sb.AppendLine($"{time} {lesson}");
 					count++;
@@ -235,10 +275,22 @@ namespace Schedule.VkApi.Bot
 
 				for(var j = 0; j < dataTable.Rows.Count; j++)
 				{
-					var time = dataTable.Rows[j][0].ToString().Insert(5, " - ");
+					var time = dataTable.Rows[j][0].ToString();
+					if(string.IsNullOrWhiteSpace(time))
+					{
+						continue;
+					}
+					else
+					{
+						time = time.Insert(5, " - ");
+					}
+
 					var lesson = dataTable.Rows[j][i].ToString();
 
-					if(string.IsNullOrWhiteSpace(lesson) || string.IsNullOrWhiteSpace(time)) continue;
+					if(string.IsNullOrWhiteSpace(lesson) || string.IsNullOrWhiteSpace(time))
+					{
+						continue;
+					}
 
 					sb.AppendLine($"{time} {lesson}");
 					count++;
@@ -253,23 +305,23 @@ namespace Schedule.VkApi.Bot
 
 		private string GetTodaySchedule(DataTable dataTable, BotCommandType commandType)
 		{
-			var dayOfWeek = _dateTime.DayOfWeek.GetDescription().ToLowerInvariant();
-			var day = _dayOfWeek[dayOfWeek];
-			var command = _commands[day];
+			var today = _dateTime.DayOfWeek.GetDescription().ToLowerInvariant();
+			var todayDayOfweek = _dayOfWeek[today];
+			var todayCommand = _commands[todayDayOfweek];
 
-			var result = GetDayOfWeekSchedule(dataTable, command);
+			var result = GetDayOfWeekSchedule(dataTable, todayCommand, commandType);
 
 			return result;
 		}
 
 		private string GetTomorrowSchedule(DataTable dataTable, BotCommandType commandType)
 		{
-			var tomorrowDay = _dateTime.AddDays(1);
-			var dayOfWeek = tomorrowDay.DayOfWeek.GetDescription().ToLowerInvariant();
-			var day = _dayOfWeek[dayOfWeek];
-			var command = _commands[day];
+			var tomorrow = _dateTime.AddDays(1);
+			var tomorrowDescription = tomorrow.DayOfWeek.GetDescription().ToLowerInvariant();
+			var tomorrowDayOfWeek = _dayOfWeek[tomorrowDescription];
+			var tomorrowCommand = _commands[tomorrowDayOfWeek];
 
-			var result = GetDayOfWeekSchedule(dataTable, command);
+			var result = GetDayOfWeekSchedule(dataTable, tomorrowCommand, commandType);
 
 			return result;
 		}
@@ -289,7 +341,16 @@ namespace Schedule.VkApi.Bot
 
 			for(var j = 0; j < dataTable.Rows.Count; j++)
 			{
-				var time = dataTable.Rows[j][0].ToString().Insert(5, "|");
+				var time = dataTable.Rows[j][0].ToString();
+				if(string.IsNullOrWhiteSpace(time))
+				{
+					continue;
+				}
+				else
+				{
+					time = time.Insert(5, "|");
+				}
+
 				var lesson = dataTable.Rows[j][columnOfDay].ToString();
 				var times = time.Split('|');
 				var timeStart = DateTime.Parse(times[0]);
@@ -341,7 +402,7 @@ namespace Schedule.VkApi.Bot
 		{
 			var dataTable = new DataTable("dataTable");
 
-			for(var i = 0; i < nodes.Count / 2; i++)
+			for(var i = 0; i < nodes.Count; i++)
 			{
 				var node = nodes[i];
 				var childNodes = node.ChildNodes;
