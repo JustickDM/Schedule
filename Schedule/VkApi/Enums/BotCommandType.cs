@@ -68,6 +68,6 @@ namespace Schedule.VkApi.Enums
 		/// Сейчас
 		/// </summary>
 		[Description("Сейчас")]
-		Now,
+		Now = 11,
 	}
 }

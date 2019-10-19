@@ -31,8 +31,8 @@ namespace Schedule.VkApi
 			int? replyTo = null, 
 			IEnumerable<int> forward_messages = null, 
 			int? sticker_id = null,
-			int? group_id = null, 
-			object keybord = null, 
+			int? group_id = null,
+			object keyboard = null,
 			string payload = null, 
 			bool dont_parse_links = false, 
 			bool disable_mentions = false)
@@ -45,7 +45,7 @@ namespace Schedule.VkApi
 			request.AddParameter(ParamType.AccessToken.GetDescription(), accessToken);
 			request.AddParameter(ParamType.UserId.GetDescription(), userId);
 			request.AddParameter(ParamType.RandomId.GetDescription(), randomId);
-			request.AddParameter(ParamType.PeerId.GetDescription(), peerId );
+			request.AddParameter(ParamType.PeerId.GetDescription(), peerId);
 			request.AddParameter(ParamType.Domain.GetDescription(), domain);
 			request.AddParameter(ParamType.ChatId.GetDescription(), chatId);
 			request.AddParameter(ParamType.UserIds.GetDescription(), userIds);
