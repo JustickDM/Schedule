@@ -192,6 +192,7 @@ namespace Schedule.VkApi.Bot
 
 			var rowsCount = dataTable.Rows.Count;
 			var isNotDayOfWeekCommand = false;
+			var rowStart = 0;
 
 			if(selectedCommandType != writedCommandType)
 			{
@@ -202,7 +203,14 @@ namespace Schedule.VkApi.Bot
 						isNotDayOfWeekCommand = true;
 						break;
 					case BotCommandType.Tomorrow:
-						rowsCount /= 2;
+						if(selectedCommandType == BotCommandType.Monday)
+						{
+							rowStart = rowsCount / 2 + 1;
+						}
+						else
+						{
+							rowsCount /= 2;
+						}
 						isNotDayOfWeekCommand = true;
 						break;
 					case BotCommandType.Now:
@@ -220,7 +228,7 @@ namespace Schedule.VkApi.Bot
 				if(!isNotDayOfWeekCommand) sb.AppendLine($"--------{shortCaption}, Текущая--------");
 				else sb.AppendLine($"--------{shortCaption}--------");
 
-				for(var j = 0; j < rowsCount; j++)
+				for(var j = rowStart; j < rowsCount; j++)
 				{
 					var time = dataTable.Rows[j][0].ToString();
 					if(string.IsNullOrWhiteSpace(time))
@@ -334,51 +342,59 @@ namespace Schedule.VkApi.Bot
 			var command = _commands[day];
 			var columnOfDay = (int)command;
 
-			var shortCaption = dataTable.Columns[columnOfDay].Caption;
-			var IsHaveLesson = false;
-
-			sb.AppendLine($"--------{shortCaption}--------");
-
-			for(var j = 0; j < dataTable.Rows.Count; j++)
+			if(columnOfDay != (int)BotCommandType.Sunday)
 			{
-				var time = dataTable.Rows[j][0].ToString();
-				if(string.IsNullOrWhiteSpace(time))
-				{
-					continue;
-				}
-				else
-				{
-					time = time.Insert(5, "|");
-				}
+				var shortCaption = dataTable.Columns[columnOfDay].Caption;
+				var IsHaveLesson = false;
 
-				var lesson = dataTable.Rows[j][columnOfDay].ToString();
-				var times = time.Split('|');
-				var timeStart = DateTime.Parse(times[0]);
-				var timeFinish = DateTime.Parse(times[1]);
+				sb.AppendLine($"--------{shortCaption}--------");
 
-				if((timeStart <= _dateTime) && (_dateTime <= timeFinish))
+				for(var j = 0; j < dataTable.Rows.Count; j++)
 				{
-					if(!string.IsNullOrWhiteSpace(lesson))
+					var time = dataTable.Rows[j][0].ToString();
+					if(string.IsNullOrWhiteSpace(time))
 					{
-						time = time.Replace('|', ' ').Insert(5, " - ");
-						sb.AppendLine($"{time} {lesson}");
-						IsHaveLesson = true;
-						break;
+						continue;
+					}
+					else
+					{
+						time = time.Insert(5, "|");
+					}
+
+					var lesson = dataTable.Rows[j][columnOfDay].ToString();
+					var times = time.Split('|');
+					var timeStart = DateTime.Parse(times[0]);
+					var timeFinish = DateTime.Parse(times[1]);
+
+					if((timeStart <= _dateTime) && (_dateTime <= timeFinish))
+					{
+						if(!string.IsNullOrWhiteSpace(lesson))
+						{
+							time = time.Replace('|', ' ').Insert(5, " - ");
+							sb.AppendLine($"{time} {lesson}");
+							IsHaveLesson = true;
+							break;
+						}
+						else
+						{
+							IsHaveLesson = false;
+						}
 					}
 					else
 					{
 						IsHaveLesson = false;
 					}
 				}
-				else
+
+				if(!IsHaveLesson)
 				{
-					IsHaveLesson = false;
+					sb.AppendLine($"В данный момент пары нет:)");
 				}
 			}
-
-			if(!IsHaveLesson)
+			else
 			{
-				sb.AppendLine($"В данный момент пары нет:)");
+				sb.AppendLine($"Сегодня воскресенье, а это значит, что сейчас пар нет и можно весь день тусииить!:)");
+				sb.AppendLine($"Или делать домашку на следующую неделю:D");
 			}
 
 			return sb.ToString();
