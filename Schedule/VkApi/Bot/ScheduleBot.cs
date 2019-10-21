@@ -43,12 +43,13 @@ namespace Schedule.VkApi.Bot
 
 		private static int _userId;
 		private static DateTime _dateTime;
-		private static bool _isFirstWeek = bool.Parse(WebConfigurationManager.AppSettings["IsFirstWeek"]);
+		private static bool _isFirstWeek;
 
 		public ScheduleBot(int userId)
 		{
 			_userId = userId;
 			_dateTime = DateTime.Now.AddHours(10); //+10 часов для получения Московского времени
+			_isFirstWeek = bool.Parse(WebConfigurationManager.AppSettings["IsFirstWeek"]);
 		}
 
 		public string Work(string command)
@@ -443,7 +444,7 @@ namespace Schedule.VkApi.Bot
 			{
 				for(var i = 0; i < nodes.Count; i++)
 				{
-					if(i >= 8)
+					if(i >= nodes.Count / 2)
 					{
 						reserseNodeCollection.Add(nodes[i - nodes.Count / 2]);
 					}
