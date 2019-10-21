@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Text;
+using System.Web.Configuration;
 
 namespace Schedule.VkApi.Bot
 {
@@ -42,6 +43,7 @@ namespace Schedule.VkApi.Bot
 
 		private static int _userId;
 		private static DateTime _dateTime;
+		private static bool _isFirstWeek = bool.Parse(WebConfigurationManager.AppSettings["IsFirstWeek"]);
 
 		public ScheduleBot(int userId)
 		{
@@ -435,10 +437,33 @@ namespace Schedule.VkApi.Bot
 		private DataTable ParseTable(HtmlNodeCollection nodes)
 		{
 			var dataTable = new DataTable("dataTable");
+			var reserseNodeCollection = new List<HtmlNode>(nodes.Count);
 
-			for(var i = 0; i < nodes.Count; i++)
+			if(!_isFirstWeek)
 			{
-				var node = nodes[i];
+				for(var i = 0; i < nodes.Count; i++)
+				{
+					if(i >= 8)
+					{
+						reserseNodeCollection.Add(nodes[i - nodes.Count / 2]);
+					}
+					else
+					{
+						reserseNodeCollection.Add(nodes[i + nodes.Count / 2]);
+					}
+				}
+			}
+			else
+			{
+				for(var i = 0; i < nodes.Count; i++)
+				{
+					reserseNodeCollection.Add(nodes[i]);
+				}
+			}
+
+			for(var i = 0; i < reserseNodeCollection.Count; i++)
+			{
+				var node = reserseNodeCollection[i];
 				var childNodes = node.ChildNodes;
 				var dataRow = dataTable.NewRow();
 
