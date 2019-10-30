@@ -19,17 +19,24 @@ namespace VkApiGroupStatisticServerMVC.Controllers
 	public class VkCallbackController : ApiController
     {
 		private string _vkApiSettingsPath = HostingEnvironment.MapPath("~/App_Data/VkApiSettings.json");
+		private string _vkKeyboardPath = HostingEnvironment.MapPath("~/App_Data/VkKeyboard.json");
 		private VkApiClient _vkApiClient = new VkApiClient();
 
         public async Task<HttpResponseMessage> Post([FromBody]RootObject rootObject)
         {
             string response;
 			VkApiSettings vkApiSettings;
+			string keyboard;
 
 			using(var sr = new StreamReader(_vkApiSettingsPath))
 			{
 				var fileContent = sr.ReadToEnd();
 				vkApiSettings = JsonConvert.DeserializeObject<VkApiSettings>(fileContent);
+			};
+
+			using(var sr = new StreamReader(_vkKeyboardPath))
+			{
+				keyboard = sr.ReadToEnd();
 			};
 
 			switch (rootObject.Type)
@@ -62,8 +69,7 @@ namespace VkApiGroupStatisticServerMVC.Controllers
 						{
 							var scheduleBot = new ScheduleBot(userId);
 							var message = scheduleBot.Work(userText);
-							
-							var result = await _vkApiClient.MessageSendAsync(vkApiSettings.AccessToken, randomId, userId, message: message);
+							var result = await _vkApiClient.MessageSendAsync(vkApiSettings.AccessToken, randomId, userId, message: message, keyboard: keyboard);
 						}
                     }
 

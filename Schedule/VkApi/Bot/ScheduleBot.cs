@@ -135,12 +135,25 @@ namespace Schedule.VkApi.Bot
 			}
 			else
 			{
-				result = command.Contains("регистрация")
+				result = command.Contains("начать")
+					? Start()
+					: command.Contains("регистрация")
 					? Registration(command)
 					: $"Давай ближе к делу, я не люблю общаться:)";
 			}
 
 			sb.AppendLine(result);
+
+			return sb.ToString();
+		}
+
+		private string Start()
+		{
+			var sb = new StringBuilder();
+
+			sb.AppendLine($"Привет, я бот расписания нашего университета:)");
+			sb.AppendLine($"Для взаимодействия со мной требуется пройти регистрацию.");
+			sb.AppendLine($"Напиши слово \"Регистрация\" для дальнейших инструкций. Удачи:)");
 
 			return sb.ToString();
 		}
@@ -194,8 +207,12 @@ namespace Schedule.VkApi.Bot
 			}
 			else
 			{
-				sb.AppendLine($"Введи правильно все данные:)");
-				sb.AppendLine($"Например (писать вместе со словом регистрация): Регистрация fitu, 1, 42m");
+				sb.AppendLine($"Для того, чтобы зарегистрироваться, необходимо ввести правильно все данные:)");
+				sb.AppendLine($"Точное название своего факультета и группы можешь посмотреть на сайте http://schedule.npi-tu.ru/");
+				sb.AppendLine($"Для этого следует выбрать на сайте свой факультет, курс и группу.");
+				sb.AppendLine($"Затем в строке браузера (URL) будут отображаться все необходимые данные для регистрации.");
+				sb.AppendLine($"Пример строки браузера (URL): http://schedule.npi-tu.ru/schedule/fitu/1/42m");
+				sb.AppendLine($"Пример команды для регистрации (писать вместе со словом регистрация): Регистрация fitu, 1, 42m");
 			}
 
 			return sb.ToString();

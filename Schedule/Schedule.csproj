@@ -226,6 +226,7 @@
     <Content Include="Content\Site.css" />
     <Content Include="App_Data\VkApiSettings.json" />
     <Content Include="App_Data\VkGroupEvents.db" />
+    <Content Include="App_Data\VkKeyboard.json" />
     <None Include="Properties\PublishProfiles\CustomProfile.pubxml" />
     <Content Include="Scripts\bootstrap.js" />
     <Content Include="Scripts\bootstrap.min.js" />

@@ -62,5 +62,11 @@ namespace Schedule.VkApi.Enums
 		/// </summary>
 		[Description("message")]
 		Message,
+
+		/// <summary>
+		/// Объект клавиатуры
+		/// </summary>
+		[Description("keyboard")]
+		Keyboard,
 	}
 }

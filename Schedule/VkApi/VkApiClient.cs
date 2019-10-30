@@ -32,7 +32,7 @@ namespace Schedule.VkApi
 			IEnumerable<int> forward_messages = null, 
 			int? sticker_id = null,
 			int? group_id = null,
-			object keyboard = null,
+			string keyboard = null,
 			string payload = null, 
 			bool dont_parse_links = false, 
 			bool disable_mentions = false)
@@ -50,6 +50,7 @@ namespace Schedule.VkApi
 			request.AddParameter(ParamType.ChatId.GetDescription(), chatId);
 			request.AddParameter(ParamType.UserIds.GetDescription(), userIds);
 			request.AddParameter(ParamType.Message.GetDescription(), message);
+			request.AddParameter(ParamType.Keyboard.GetDescription(), keyboard);
 
 			var rootObject = await Task.Run(() =>
 			{
